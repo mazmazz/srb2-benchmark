@@ -74,13 +74,19 @@ def main():
 
                     # Test per vidmode
                     for vidmode in args.vidmode:
-                        trialid = '{}_{}'.format( #'{}_{}_{}_{}'.format(
-                            exeid,
-                            #execname
-                            #vidmode,
-                            datetime.utcnow().strftime('%Y%m%d%H%M%S'))
+                        trialtime = datetime.utcnow().strftime('%Y%m%d%H%M%S')
+                        trialtimeread = datetime.utcnow().strftime('%Y/%m/%d %H:%M:%S')
 
-                        print('Testing ID {} in {}, vidmode {}'.format(trialid, execname, vidmode))
+                        if args.unique:
+                            trialid = '{}_{}'.format( #'{}_{}_{}_{}'.format(
+                                exeid,
+                                #execname
+                                #vidmode,
+                                trialtime)
+                        else:
+                            trialid = exeid
+
+                        print('Testing ID {} in {}, vidmode {} - {}'.format(trialid, execname, vidmode, trialtimeread))
 
                         scriptpath = os.path.join(fullcwd, 'srb2benchmark-script.txt')
                         scriptfile = open(scriptpath, 'w', encoding='ascii')
@@ -160,6 +166,9 @@ def get_args():
         help='Space-separated list of demo filenames to benchmark, relative to the CWD.')
     parser.add_argument('-trials', type=int, default=3,
         help='Number of trials per test')
+
+    parser.add_argument('-unique', action='store_true', default=False,
+        help='Make trial IDs unique (add UTC datetime to ID string)')
 
     args = parser.parse_args()
     return args
