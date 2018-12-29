@@ -77,14 +77,12 @@ def main():
                         trialtime = datetime.utcnow().strftime('%Y%m%d%H%M%S')
                         trialtimeread = datetime.utcnow().strftime('%Y/%m/%d %H:%M:%S')
 
-                        if args.unique:
-                            trialid = '{}_{}'.format( #'{}_{}_{}_{}'.format(
-                                exeid,
-                                #execname
-                                #vidmode,
-                                trialtime)
-                        else:
-                            trialid = exeid
+                        trialid = '{}{}{}'.format( #'{}_{}_{}_{}'.format(
+                            exeid,
+                            #execname
+                            #vidmode,
+                            '_{}'.format(i) if not args.noidtrialnum else '',
+                            '_{}'.format(trialtime) if args.unique else '')
 
                         print('Testing ID {} in {}, vidmode {} - {}'.format(trialid, execname, vidmode, trialtimeread))
 
@@ -155,6 +153,8 @@ def get_args():
     parser.add_argument('-trials', type=int, default=3,
         help='Number of trials per test')
 
+    parser.add_argument('-noidtrialnum', action='store_true', default=False,
+        help='Do not add trial number to ID')
     parser.add_argument('-unique', action='store_true', default=False,
         help='Make trial IDs unique (add UTC datetime to ID string)')
 
