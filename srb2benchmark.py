@@ -2,6 +2,7 @@
 import struct
 import argparse
 import os
+# When running `pyinstaller build-cmd.spec`, comment out this below line
 from gooey import Gooey, GooeyParser
 import itertools
 from datetime import datetime
@@ -18,6 +19,7 @@ def is_exe(fpath):
 # Main
 #################################
 
+# When running `pyinstaller build-cmd.spec`, comment out this @Gooey(...) statement
 @Gooey(
     program_name = 'SRB2 Benchmark Tool',
     required_cols = 1,

@@ -1,7 +1,14 @@
 # -*- mode: python -*-
 
-# NOTE: IN srb2benchmark.py, COMMENT OUT THIS LINE, OR ELSE YOUR EXE WILL INCLUDE GOOEY RESOURCES
+# NOTE: IN srb2benchmark.py, COMMENT OUT THESE LINES, OR ELSE YOUR EXE WILL INCLUDE GOOEY RESOURCES
+#
 # from gooey import Gooey, GooeyParser
+#
+# @Gooey(
+#     program_name = 'SRB2 Benchmark Tool',
+#     required_cols = 1,
+#     optional_cols = 1,
+# )
 
 #import gooey
 #gooey_root = os.path.dirname(gooey.__file__)
