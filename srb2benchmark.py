@@ -25,6 +25,7 @@ def is_exe(fpath):
 )
 def main():
     args = get_args()
+    xargs = args.xargs
     fullcwd = os.path.abspath(os.path.join(os.getcwd(), args.cwd))
 
     print('SRB2 working directory is {}'.format(fullcwd))
@@ -53,7 +54,7 @@ def main():
             print ('Using demo path {}'.format(demopath))
 
             # Test per EXE
-            for exepath,exeid,exenosoftware,exeopengl in itertools.zip_longest(args.exe, args.id, args.nosoftware, args.opengl):
+            for exepath,exeid,exenosoftware,exeopengl,exeperargs in itertools.zip_longest(args.exe, args.id, args.nosoftware, args.opengl, args.perargs):
                 fullexepath = os.path.abspath(os.path.join(os.getcwd(), exepath))
 
                 if not is_exe(fullexepath):
@@ -96,7 +97,7 @@ def main():
 
                         print('Running {}'.format(fullexepath))
 
-                        o = subprocess.Popen('"{}" {} -win -nomouse -nomusic -nosound -skipintro +exec srb2benchmark-script.txt'.format(fullexepath, execarg),
+                        o = subprocess.Popen('"{}" {} -win -nomouse -nomusic -nosound -skipintro {} {} +exec srb2benchmark-script.txt'.format(fullexepath, exeperargs if isinstance(exeperargs, str) else '', xargs if isinstance(xargs, str) else '', execarg),
                             cwd=fullcwd)
                         o.wait()
 
@@ -142,16 +143,21 @@ def get_args():
     parser.add_argument('-opengl', type=str2bool, nargs='+',
         default=[False, False],
         help='Benchmark OpenGL mode. Space-separated true or false per EXE')
+    parser.add_argument('-perargs', type=str, nargs='+',
+        default=['""','""'],
+        help='Command line arguments to add. Space-separated, quoted strings per EXE.')
+
     parser.add_argument('-vidmode', type=int, nargs='+',
         default=[0, 15],
         help='Space-separated list of vid_modes to test, for all EXEs. 0 = 1920x1200; 9 = 1280x800; 15 = 640x400')
-
     parser.add_argument('-demo', type=str, nargs='+',
         default=['benchmark/replay/main/MAP01-guest.lmp',
                 'benchmark/replay/main/MAP02-guest.lmp'],
         help='Space-separated list of demo filenames to benchmark, relative to the CWD.')
     parser.add_argument('-trials', type=int, default=3,
         help='Number of trials per test')
+    parser.add_argument('-xargs', type=str, default='',
+        help='Command line arguments to add to every run.')
 
     parser.add_argument('-noidtrialnum', action='store_true', default=False,
         help='Do not add trial number to ID')
