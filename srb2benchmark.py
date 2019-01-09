@@ -99,7 +99,7 @@ def main():
 
                         print('Running {}'.format(fullexepath))
 
-                        o = subprocess.Popen('"{}" {} -win -nomouse -nomusic -nosound -skipintro {} {} +exec srb2benchmark-script.txt'.format(fullexepath, exeperargs if isinstance(exeperargs, str) else '', xargs if isinstance(xargs, str) else '', execarg),
+                        o = subprocess.Popen('"{}" {} {} {} -skipintro +exec srb2benchmark-script.txt'.format(fullexepath, exeperargs if isinstance(exeperargs, str) else '', xargs if isinstance(xargs, str) else '', execarg),
                             cwd=fullcwd)
                         o.wait()
 
@@ -158,7 +158,7 @@ def get_args():
         help='Space-separated list of demo filenames to benchmark, relative to the CWD.')
     parser.add_argument('-trials', type=int, default=3,
         help='Number of trials per test')
-    parser.add_argument('-xargs', type=str, default='',
+    parser.add_argument('-xargs', type=str, default='-win -nomouse -nomusic -nosound',
         help='Command line arguments to add to every run.')
 
     parser.add_argument('-noidtrialnum', action='store_true', default=False,
