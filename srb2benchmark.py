@@ -271,13 +271,13 @@ def get_args():
         help='Command line arguments to add. Space-separated, quoted strings per EXE.')
 
     parser.add_argument('-vidmode', type=int, nargs='+',
-        default=[0, 15],
+        default=[0, 9, 15],
         help='Space-separated list of vid_modes to test, for all EXEs. 0 = 1920x1200; 9 = 1280x800; 15 = 640x400')
     parser.add_argument('-demo', type=str, nargs='+',
         default=['benchmark/replay/main/MAP01-guest.lmp',
                 'benchmark/replay/main/MAP02-guest.lmp'],
         help='Space-separated list of demo filenames to benchmark, relative to the CWD.')
-    parser.add_argument('-trials', type=int, default=3,
+    parser.add_argument('-trials', type=int, default=1,
         help='Number of trials per test')
     parser.add_argument('-xargs', type=str, default='-win -nomouse -nomusic -nosound',
         help='Command line arguments to add to every run.')
@@ -286,7 +286,7 @@ def get_args():
         help='File to save testing state and resume on subsequent runs.')
 
     parser.add_argument('-idtrialnum', action='store_true', default=False,
-        help='Do not add trial number to ID')
+        help='Add trial number to ID')
     parser.add_argument('-idunique', action='store_true', default=False,
         help='Make trial IDs unique (add UTC datetime to ID string)')
 
