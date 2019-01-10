@@ -17,6 +17,45 @@ import copy
 def is_exe(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
+def tail(filepath):
+    """
+    @author Marco Sulla (marcosullaroma@gmail.com)
+    @date May 31, 2016
+    """
+
+    try:
+        filepath.is_file
+        fp = str(filepath)
+    except AttributeError:
+        fp = filepath
+
+    with open(fp, "rb") as f:
+        size = os.stat(fp).st_size
+        start_pos = 0 if size - 1 < 0 else size - 1
+
+        if start_pos != 0:
+            f.seek(start_pos)
+            char = f.read(1)
+
+            if char == b"\n":
+                start_pos -= 1
+                f.seek(start_pos)
+
+            if start_pos == 0:
+                f.seek(start_pos)
+            else:
+                char = ""
+
+                for pos in range(start_pos, -1, -1):
+                    f.seek(pos)
+
+                    char = f.read(1)
+
+                    if char == b"\n":
+                        break
+
+        return f.readline()
+
 #################################
 # Main
 #################################
@@ -32,6 +71,7 @@ def main():
     xargs = args.xargs
     fullcwd = os.path.abspath(os.path.join(os.getcwd(), args.cwd))
 
+    print('')
     print('SRB2 working directory is {}'.format(fullcwd))
 
     if not os.path.isdir(fullcwd) or (not os.path.isfile(os.path.join(fullcwd, 'srb2.srb')) and not os.path.isfile(os.path.join(fullcwd, 'srb2.wad')) and not os.path.isfile(os.path.join(fullcwd, 'srb2.pk3'))):
@@ -67,6 +107,7 @@ def main():
             continue
         state['trial'] = i
 
+        print('\n{} \n'.format('='*72))
         print('Starting trial {}'.format(i+1))
 
         # Test per demo name
@@ -81,6 +122,7 @@ def main():
                 print('Demo path {} does not exist; skipping...'.format(fulldemopath))
                 continue
 
+            print('\n{} \n'.format('='*48))
             print ('Using demo path {}'.format(demopath))
 
             # Test per EXE
@@ -139,6 +181,7 @@ def main():
                             '_{}'.format(i) if args.idtrialnum else '',
                             '_{}'.format(trialtime) if args.idunique else '')
 
+                        print('\n{} \n'.format('='*24))
                         print('Testing ID {} in {}, vidmode {} - {}'.format(trialid, execname, vidmode, trialtimeread))
 
                         scriptpath = os.path.join(fullcwd, 'srb2benchmark-script.txt')
@@ -149,11 +192,32 @@ def main():
                         scriptfile.write('timedemo "{}" -csv "{}" -quit\n'.format(demopath, trialid))
                         scriptfile.close()
 
+                        # Get last line of timedemo.csv so we can detect whether it was changed
+                        timedemopath = os.path.join(fullcwd, 'timedemo.csv')
+                        timedemoline = None
+                        if os.path.isfile(timedemopath):
+                            timedemoline = tail(timedemopath)
+
                         print('Running {}'.format(fullexepath))
 
                         o = subprocess.Popen('"{}" {} {} {} -skipintro +exec srb2benchmark-script.txt'.format(fullexepath, exeperargs if isinstance(exeperargs, str) else '', xargs if isinstance(xargs, str) else '', execarg),
                             cwd=fullcwd)
                         o.wait()
+
+                        # If EXE did not print a new line to timedemo.csv, then it was not successful
+                        newtimedemoline = None
+                        if os.path.isfile(timedemopath):
+                            newtimedemoline = tail(timedemopath)
+                        if not newtimedemoline or (timedemoline and newtimedemoline == timedemoline):
+                            print('Test did not finish; halting.')
+                            if os.path.isfile(statepath):
+                                print('Resume testing with -savestate {}'.format(args.savestate))
+                            return
+                        if newtimedemoline:
+                            try:
+                                print(newtimedemoline.decode())
+                            except:
+                                print(newtimedemoline)
 
                         print('Finished testing ID {}'.format(trialid))
 
