@@ -7,6 +7,8 @@ from gooey import Gooey, GooeyParser
 import itertools
 from datetime import datetime
 import subprocess
+import json
+import copy
 
 #################################
 # Utilities
@@ -32,9 +34,27 @@ def main():
 
     print('SRB2 working directory is {}'.format(fullcwd))
 
-    if not os.path.isdir(fullcwd):
-        print('SRB2 working directory {} is invalid.'.format(args.cwd))
+    if not os.path.isdir(fullcwd) or (not os.path.isfile(os.path.join(fullcwd, 'srb2.srb')) and not os.path.isfile(os.path.join(fullcwd, 'srb2.wad')) and not os.path.isfile(os.path.join(fullcwd, 'srb2.pk3'))):
+        print('SRB2 working directory {} does not have SRB2 IWAD.'.format(args.cwd))
         return
+
+    # Get savestate
+    blankstate = {
+        'trial': None,
+        'demopath': None,
+        'exepath': None,
+        'exeid': None,
+        'exeperargs': None,
+        'execname': None,
+        'vidmode': None
+    }
+    state = copy.deepcopy(blankstate)
+    statepath = os.path.join(os.getcwd(), args.savestate) if args.savestate else ''
+    stateloading = False
+    if os.path.isfile(statepath):
+        with open(statepath, 'r') as f:
+            state = json.load(f)
+        stateloading = True
 
     # Test hierarchy:
     # trial number
@@ -43,10 +63,18 @@ def main():
     # Software/OGL
     # Vidmode
     for i in range(0, args.trials):
+        if stateloading and 'trial' in state and state['trial'] is not None and i != state['trial']:
+            continue
+        state['trial'] = i
+
         print('Starting trial {}'.format(i+1))
 
         # Test per demo name
         for demopath in args.demo:
+            if stateloading and 'demopath' in state and state['demopath'] is not None and demopath != state['demopath']:
+                continue
+            state['demopath'] = demopath
+
             fulldemopath = os.path.abspath(os.path.join(fullcwd, demopath))
 
             if not os.path.isfile(fulldemopath):
@@ -57,6 +85,16 @@ def main():
 
             # Test per EXE
             for exepath,exeid,exenosoftware,exeopengl,exeperargs in itertools.zip_longest(args.exe, args.id, args.nosoftware, args.opengl, args.perargs):
+                if stateloading and 'exepath' in state and state['exepath'] is not None and exepath != state['exepath']:
+                    continue
+                state['exepath'] = exepath
+                if stateloading and 'exeid' in state and state['exeid'] is not None and exeid != state['exeid']:
+                    continue
+                state['exeid'] = exeid
+                if stateloading and 'exeperargs' in state and state['exeperargs'] is not None and exeperargs != state['exeperargs']:
+                    continue
+                state['exeperargs'] = exeperargs
+
                 fullexepath = os.path.abspath(os.path.join(os.getcwd(), exepath))
 
                 if not is_exe(fullexepath):
@@ -75,8 +113,22 @@ def main():
                 for execarg in execlist:
                     execname = 'software' if execarg == '' else 'opengl' if execarg == '-opengl' else 'na'
 
+                    if stateloading and 'execname' in state and state['execname'] is not None and execname != state['execname']:
+                        continue
+                    state['execname'] = execname
+
                     # Test per vidmode
                     for vidmode in args.vidmode:
+                        if stateloading and 'vidmode' in state and state['vidmode'] is not None and vidmode != state['vidmode']:
+                            continue
+                        state['vidmode'] = vidmode
+
+                        # Save state now before running the EXE
+                        if statepath:
+                            with open(statepath, 'w') as outfile:
+                                json.dump(state, outfile)
+                        stateloading = False
+
                         trialtime = datetime.utcnow().strftime('%Y%m%d%H%M%S')
                         trialtimeread = datetime.utcnow().strftime('%Y/%m/%d %H:%M:%S')
 
@@ -84,8 +136,8 @@ def main():
                             exeid,
                             #execname
                             #vidmode,
-                            '_{}'.format(i) if not args.noidtrialnum else '',
-                            '_{}'.format(trialtime) if args.unique else '')
+                            '_{}'.format(i) if args.idtrialnum else '',
+                            '_{}'.format(trialtime) if args.idunique else '')
 
                         print('Testing ID {} in {}, vidmode {} - {}'.format(trialid, execname, vidmode, trialtimeread))
 
@@ -111,6 +163,11 @@ def main():
             print('Finished demo path {}'.format(demopath))
 
         print('Finished trial {}'.format(i+1))
+
+    # Write a blank state now that we are finished
+    if statepath:
+        with open(statepath, 'w') as outfile:
+            json.dump(blankstate, outfile)
 
     print('Finished! See results in {}'.format(os.path.abspath(os.path.join(fullcwd, 'timedemo.csv'))))
 
@@ -161,9 +218,12 @@ def get_args():
     parser.add_argument('-xargs', type=str, default='-win -nomouse -nomusic -nosound',
         help='Command line arguments to add to every run.')
 
-    parser.add_argument('-noidtrialnum', action='store_true', default=False,
+    parser.add_argument('-savestate', type=str, default=None,
+        help='File to save testing state and resume on subsequent runs.')
+
+    parser.add_argument('-idtrialnum', action='store_true', default=False,
         help='Do not add trial number to ID')
-    parser.add_argument('-unique', action='store_true', default=False,
+    parser.add_argument('-idunique', action='store_true', default=False,
         help='Make trial IDs unique (add UTC datetime to ID string)')
 
     args = parser.parse_args()
